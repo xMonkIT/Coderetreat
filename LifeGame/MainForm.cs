@@ -11,7 +11,7 @@ namespace LifeGame
         private const int CellSize = 10;
 
         private Generation _generation;
-        private readonly IList<Cell> _tempCells = new List<Cell>();
+        private IEnumerable<Cell> _tempCells = new List<Cell>();
 
         private Graphics _graphics;
         private readonly Brush _aliveBrush = new Pen(Color.BlueViolet).Brush;
@@ -53,7 +53,10 @@ namespace LifeGame
         private void pField_MouseClick(object sender, MouseEventArgs e)
         {
             new List<Cell> {new Cell(e.X/CellSize, e.Y/CellSize)}
-                .ForEach(x => {if (_tempCells.Contains(x)) _tempCells.Remove(x); else _tempCells.Add(x);});
+                .ForEach(x => _tempCells = _tempCells.Contains(x)
+                    ? _tempCells.Where(y => !y.Equals(x))
+                    : _tempCells.Concat(new List<Cell> {x})
+                );
             pField.Invalidate(true);
         }
 
@@ -66,7 +69,7 @@ namespace LifeGame
         private void tDelay_Tick(object sender, EventArgs e)
         {
             _generation = new Generation(_generation.AliveCells.Concat(_tempCells)).GetNextGeneration();
-            _tempCells.Clear();
+            _tempCells = new List<Cell>();
             pField.Invalidate(true);
         }
 
