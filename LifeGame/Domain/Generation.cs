@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace LifeGame
+namespace LifeGame.Domain
 {
     class Generation
     {

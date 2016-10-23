@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using LifeGame.Controllers;
 
 namespace LifeGame
 {
@@ -10,8 +10,7 @@ namespace LifeGame
     {
         private const int CellSize = 10;
 
-        private Generation _generation;
-        private IEnumerable<Cell> _tempCells = new List<Cell>();
+        private readonly LifeController _life;
 
         private Graphics _graphics;
         private readonly Brush _aliveBrush = new Pen(Color.BlueViolet).Brush;
@@ -21,42 +20,36 @@ namespace LifeGame
         {
             InitializeComponent();
 
-            _generation = new Generation(new List<Cell>
-            {
-                new Cell(2, 0),
-                new Cell(2, 1),
-                new Cell(2, 2),
-                new Cell(1, 2),
-                new Cell(0, 1),
-            });
+            _life = new LifeController(
+                new Tuple<int, int>(2, 0),
+                new Tuple<int, int>(2, 1),
+                new Tuple<int, int>(2, 2),
+                new Tuple<int, int>(1, 2),
+                new Tuple<int, int>(0, 1)
+            );
 
-            Invalidate(true);
+            _life.Paint += (s, e) => e
+                .Cells
+                .ToList()
+                .ForEach(x => _graphics
+                    .FillRectangle(_aliveBrush, x.Item1*CellSize, x.Item2*CellSize, CellSize + 1, CellSize + 1)
+                );
+
+            pField.Invalidate();
         }
 
         private void pField_Paint(object sender, PaintEventArgs e)
         {
             _graphics = pField.CreateGraphics();
             _graphics.Clear(_backgroundColor);
-
-            _generation
-                .AliveCells
-                .ToList()
-                .ForEach(y => _graphics.FillRectangle(_aliveBrush, y.X*CellSize, y.Y*CellSize, CellSize + 1, CellSize + 1));
-
-            _tempCells
-                .ToList()
-                .ForEach(x => _graphics.FillRectangle(_aliveBrush, x.X*CellSize, x.Y*CellSize, CellSize + 1, CellSize + 1));
+            _life.Invalidate();
         }
 
-        private void MainForm_Resize(object sender, EventArgs e) => Invalidate(true);
+        private void MainForm_Resize(object sender, EventArgs e) => pField.Invalidate();
 
         private void pField_MouseClick(object sender, MouseEventArgs e)
         {
-            new List<Cell> {new Cell(e.X/CellSize, e.Y/CellSize)}
-                .ForEach(x => _tempCells = _tempCells.Contains(x)
-                    ? _tempCells.Where(y => !y.Equals(x))
-                    : _tempCells.Concat(new List<Cell> {x})
-                );
+            _life.ToggleCellState(new Tuple<int, int>(e.X/CellSize, e.Y/CellSize));
             pField.Invalidate(true);
         }
 
@@ -68,9 +61,8 @@ namespace LifeGame
 
         private void tDelay_Tick(object sender, EventArgs e)
         {
-            _generation = new Generation(_generation.AliveCells.Concat(_tempCells)).GetNextGeneration();
-            _tempCells = new List<Cell>();
-            pField.Invalidate(true);
+            _life.Tick();
+            pField.Invalidate();
         }
 
         private void hsbDelay_Scroll(object sender, ScrollEventArgs e) => tDelay.Interval = hsbDelay.Value;

@@ -1,4 +1,4 @@
-﻿namespace LifeGame
+﻿namespace LifeGame.Domain
 {
     class Cell
     {
