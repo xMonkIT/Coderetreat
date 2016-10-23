@@ -15,7 +15,7 @@ namespace LifeGame.Domain
         public IEnumerable<Cell> AliveCells => _aliveCells;
 
         public Generation GetNextGeneration() =>
-            new Generation(_aliveCells.SelectMany(GetNeighbours).Where(WillBeAlive));
+            new Generation(_aliveCells.SelectMany(GetNeighbours).Where(x => WillBeAlive(x)));
 
         IEnumerable<Cell> GetNeighbours(Cell cell) =>
             Enumerable
@@ -27,8 +27,9 @@ namespace LifeGame.Domain
                 .Where(x => !Equals(x, cell));
 
         bool WillBeAlive(Cell cell) =>
-            new List<int> {GetNeighbours(cell).Count(_aliveCells.Contains)}
-                .Select(x => x == 3 || x == 2 && _aliveCells.Contains(cell))
-                .First();
+            WillBeAlive(cell, GetNeighbours(cell).Count(_aliveCells.Contains));
+
+        bool WillBeAlive(Cell cell, int aliveNeighboursCount) =>
+            aliveNeighboursCount == 3 || aliveNeighboursCount == 2 && _aliveCells.Contains(cell);
     }
 }
